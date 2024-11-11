@@ -10,14 +10,13 @@ import (
 	"github.com/VsenseTechnologies/skf_mqtt_message_processor/db"
 	"github.com/VsenseTechnologies/skf_mqtt_message_processor/handler"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/joho/godotenv"
 )
 
 func main() {
 
-	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalf("failed to load env variable Error -> %v\n", err.Error())
-	}
+	// if err := godotenv.Load(".env"); err != nil {
+	// 	log.Fatalf("failed to load env variable Error -> %v\n", err.Error())
+	// }
 
 	//initializing the logger
 	initLogger()
