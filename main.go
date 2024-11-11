@@ -27,11 +27,11 @@ func main() {
 		log.Fatalf("error occurred while connecting to redis, Error -> %v\n", err.Error())
 	}
 
-	fmt.Println("connected to redis")
+	log.Println("connected to redis")
 
 	dbConn, err := db.Connect()
 
-	fmt.Println("connected to database ")
+	log.Println("connected to database ")
 
 	if err != nil {
 		log.Fatalf("error occurred while connecting to database Error -> %v\n", err.Error())
@@ -64,7 +64,7 @@ func main() {
 	opts.SetClientID(clientId)
 
 	opts.OnConnect = func(c mqtt.Client) {
-		fmt.Println("connected to broker")
+		log.Println("connected to broker")
 	}
 
 	opts.OnConnectionLost = func(c mqtt.Client, err error) {
