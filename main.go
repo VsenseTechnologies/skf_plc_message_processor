@@ -38,22 +38,22 @@ func main() {
 		log.Fatalf("error occurred while connecting to database Error -> %v\n", err.Error())
 	}
 
-	var brokerHost = os.Getenv("S2_BROKER_HOST")
+	var brokerHost = os.Getenv("BROKER_HOST")
 
 	if brokerHost == "" {
 		log.Fatalf("missing or empty env variable S2_BROKER_HOST \n")
 	}
 
-	var brokerPort = os.Getenv("S2_BROKER_PORT")
+	var brokerPort = os.Getenv("BROKER_PORT")
 
 	if brokerPort == "" {
-		log.Fatalf("missing or empty env variable S2_BROKER_PORT\n")
+		log.Fatalf("missing or empty env variable BROKER_PORT\n")
 	}
 
-	var clientId = os.Getenv("S2_CLIENT_ID")
+	var clientId = os.Getenv("CLIENT_ID")
 
 	if clientId == "" {
-		log.Fatalf("missing or empty env variable S2_CLIENT_ID\n")
+		log.Fatalf("missing or empty env variable CLIENT_ID\n")
 	}
 
 	var brokerAddress = fmt.Sprintf("tcp://%s:%s", brokerHost, brokerPort)

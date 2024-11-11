@@ -9,10 +9,10 @@ import (
 )
 
 func Connect() (*redis.Client, error) {
-	url := os.Getenv("S2_REDIS_URL")
+	url := os.Getenv("REDIS_URL")
 
 	if url == "" {
-		log.Fatalf("missing or empty env variable S2_REDIS_URL\n")
+		log.Fatalf("missing or empty env variable REDIS_URL\n")
 	}
 
 	opts, err := redis.ParseURL(url)
