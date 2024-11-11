@@ -156,10 +156,10 @@ func MessageProcessor(c mqtt.Client, m mqtt.Message, cacheRepo *repository.Redis
 			return
 		}
 
-		maxTimeStr := os.Getenv("DRIER_RECIPE_MAX_TIME")
+		maxTimeStr := os.Getenv("S2_DRIER_RECIPE_MAX_TIME")
 
 		if maxTimeStr == "" {
-			log.Printf("missing or empty env variable DRIER_RECIPE_MAX_TIME")
+			log.Printf("missing or empty env variable S2_DRIER_RECIPE_MAX_TIME")
 			return
 		}
 

@@ -10,13 +10,14 @@ import (
 	"github.com/VsenseTechnologies/skf_mqtt_message_processor/db"
 	"github.com/VsenseTechnologies/skf_mqtt_message_processor/handler"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 
-	// if err := godotenv.Load(".env"); err != nil {
-	// 	log.Fatalf("failed to load env variable Error -> %v\n", err.Error())
-	// }
+	if err := godotenv.Load(".env"); err != nil {
+		log.Fatalf("failed to load env variable Error -> %v\n", err.Error())
+	}
 
 	//initializing the logger
 	initLogger()
@@ -37,22 +38,22 @@ func main() {
 		log.Fatalf("error occurred while connecting to database Error -> %v\n", err.Error())
 	}
 
-	var brokerHost = os.Getenv("BROKER_HOST")
+	var brokerHost = os.Getenv("S2_BROKER_HOST")
 
 	if brokerHost == "" {
-		log.Fatalf("missing or empty env variable \n")
+		log.Fatalf("missing or empty env variable S2_BROKER_HOST \n")
 	}
 
-	var brokerPort = os.Getenv("BROKER_PORT")
+	var brokerPort = os.Getenv("S2_BROKER_PORT")
 
 	if brokerPort == "" {
-		log.Fatalf("missing or empty env variable BROKER_HOST\n")
+		log.Fatalf("missing or empty env variable S2_BROKER_PORT\n")
 	}
 
-	var clientId = os.Getenv("CLIENT_ID")
+	var clientId = os.Getenv("S2_CLIENT_ID")
 
 	if clientId == "" {
-		log.Fatalf("missing or empty env variable CLIENT_ID\n")
+		log.Fatalf("missing or empty env variable S2_CLIENT_ID\n")
 	}
 
 	var brokerAddress = fmt.Sprintf("tcp://%s:%s", brokerHost, brokerPort)
@@ -77,15 +78,22 @@ func main() {
 		log.Printf("error occurred while connecting to broker, Error -> %v\n", token.Error())
 	}
 
-	client.Subscribe("+/server", 1, handler.Handler(cacheConn, dbConn))
+	if client.IsConnected() {
+		client.Subscribe("+/message/processor", 1, handler.Handler(cacheConn, dbConn))
+	}
 
 	for {
 		if !client.IsConnected() {
+
 			if token := client.Connect(); token.Wait() && token.Error() != nil {
 				log.Printf("error occurred while connecting to broker, Error -> %v\n", token.Error())
-			} else {
-				log.Printf("reconnected to the broker\n")
+				continue
 			}
+
+			client.Unsubscribe("+/message/processor")
+			client.Subscribe("+/message/processor", 1, handler.Handler(cacheConn, dbConn))
+
+			log.Println("reconnected to broker")
 
 		}
 
