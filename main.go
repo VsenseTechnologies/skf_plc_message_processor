@@ -31,7 +31,7 @@ func main() {
 
 	dbConn, err := db.Connect()
 
-	fmt.Println("connected to database")
+	fmt.Println("connected to database ")
 
 	if err != nil {
 		log.Fatalf("error occurred while connecting to database Error -> %v\n", err.Error())
