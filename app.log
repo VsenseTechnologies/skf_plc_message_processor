@@ -1,0 +1,8 @@
+2024/11/11 14:19:18 missing or empty env variable REDIS_URL
+2024/11/11 14:19:35 error occurred while connecting to database Error -> failed to connect to `user=doadmin database=skf-plc`: 143.110.250.11:25060 (db-postgresql-blr1-79726-do-user-17495985-0.m.db.ondigitalocean.com): server error: FATAL: password authentication failed for user "doadmin" (SQLSTATE 28P01)
+2024/11/11 14:19:53 error occurred while connecting to database Error -> failed to connect to `user=skf-plc database=skf-plc`: 143.110.250.11:25060 (db-postgresql-blr1-79726-do-user-17495985-0.m.db.ondigitalocean.com): server error: FATAL: password authentication failed for user "skf-plc" (SQLSTATE 28P01)
+2024/11/11 14:21:46 disconnected from the broker, Error -> EOF
+2024/11/11 14:21:47 disconnected from the broker, Error -> EOF
+2024/11/11 14:21:50 disconnected from the broker, Error -> EOF
+2024/11/11 14:22:41 disconnected from the broker, Error -> EOF
+2024/11/11 14:22:42 disconnected from the broker, Error -> EOF
