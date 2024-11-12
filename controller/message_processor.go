@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -156,19 +155,21 @@ func MessageProcessor(c mqtt.Client, m mqtt.Message, cacheRepo *repository.Redis
 			return
 		}
 
-		maxTimeStr := os.Getenv("DRIER_RECIPE_MAX_TIME")
+		// maxTimeStr := os.Getenv("DRIER_RECIPE_MAX_TIME")
 
-		if maxTimeStr == "" {
-			log.Printf("missing or empty env variable DRIER_RECIPE_MAX_TIME")
-			return
-		}
+		// if maxTimeStr == "" {
+		// 	log.Printf("missing or empty env variable DRIER_RECIPE_MAX_TIME")
+		// 	return
+		// }
 
-		maxTime, err := strconv.Atoi(maxTimeStr)
+		// maxTime, err := strconv.Atoi(maxTimeStr)
 
-		if err != nil {
-			log.Printf("error occurred while parsing drier recipe max time from string to integer, Error -> %v\n", err.Error())
-			return
-		}
+		// if err != nil {
+		// 	log.Printf("error occurred while parsing drier recipe max time from string to integer, Error -> %v\n", err.Error())
+		// 	return
+		// }
+
+		maxTime := 3600
 
 		currentTime, err := strconv.Atoi(rawMessage.Data)
 
