@@ -47,6 +47,12 @@ func (repo *RedisRepository) GetDrierRecipeStepCount(drierId string) (string, er
 	return result, err
 }
 
+func (repo *RedisRepository) GetRecipeStepCompleteStatus(drierId string) (string, error) {
+	key := fmt.Sprintf("rcp_stp_cmp_%s", drierId)
+	result, err := repo.client.Get(context.Background(), key).Result()
+	return result, err
+}
+
 func (repo *RedisRepository) UpdateRecipeStepCompleteStatus(drierId string, status string) error {
 	key := fmt.Sprintf("rcp_stp_cmp_%s", drierId)
 	_, err := repo.client.Set(context.Background(), key, status, 0).Result()

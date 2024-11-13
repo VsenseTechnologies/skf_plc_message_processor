@@ -180,11 +180,19 @@ func MessageProcessor(c mqtt.Client, m mqtt.Message, cacheRepo *repository.Redis
 					return
 				}
 
+				recipeStepCompleteStatus, err := cacheRepo.GetRecipeStepCompleteStatus(drierId)
+
+				if err != nil {
+					log.Printf("error occurred with redis while getting recipe step complete status, Error -> %v\n", err.Error())
+					return
+				}
+
 				recipeStepMessage := &model.RecipeStep{
 					StepCount:       recipeStepCount,
 					RealTime:        rawMessage.Data,
 					RealTemperature: recipeRealTimeTemp,
 					SetTime:         recipeSetTime,
+					StepComplete:    recipeStepCompleteStatus,
 				}
 
 				recipeStepJsonMessage, err := json.Marshal(recipeStepMessage)
