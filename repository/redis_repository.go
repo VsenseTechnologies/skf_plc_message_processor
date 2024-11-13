@@ -47,8 +47,20 @@ func (repo *RedisRepository) GetDrierRecipeStepCount(drierId string) (string, er
 	return result, err
 }
 
-func (repo *RedisRepository) UpdateDrierRecipeTemperature(drierId string, temp string) error {
-	key := fmt.Sprintf("rcp_stp_tp_%s", drierId)
+func (repo *RedisRepository) UpdateRecipeStepCompleteStatus(drierId string, status string) error {
+	key := fmt.Sprintf("rcp_stp_cmp_%s", drierId)
+	_, err := repo.client.Set(context.Background(), key, status, 0).Result()
+	return err
+}
+
+func (repo *RedisRepository) UpdateRecipeSetTime(drierId string, time string) error {
+	key := fmt.Sprintf("rcp_stp_stm_%s", drierId)
+	_, err := repo.client.Set(context.Background(), key, time, 0).Result()
+	return err
+}
+
+func (repo *RedisRepository) UpdateDrierRecipeRealTimeTemperature(drierId string, temp string) error {
+	key := fmt.Sprintf("rcp_stp_rtp_%s", drierId)
 	_, err := repo.client.Set(context.Background(), key, temp, 0).Result()
 	return err
 }
@@ -59,8 +71,14 @@ func (repo *RedisRepository) UpdateDrierRecipeStepCount(drierId string, count st
 	return err
 }
 
-func (repo *RedisRepository) GetDrierRecipeTemperature(drierId string) (string, error) {
-	key := fmt.Sprintf("rcp_stp_tp_%s", drierId)
+func (repo *RedisRepository) GetDrierRecipeRealTimeTemperature(drierId string) (string, error) {
+	key := fmt.Sprintf("rcp_stp_rtp_%s", drierId)
+	result, err := repo.client.Get(context.Background(), key).Result()
+	return result, err
+}
+
+func (repo *RedisRepository) GetDrierRecipeSetTime(drierId string) (string, error) {
+	key := fmt.Sprintf("rcp_stp_stm_%s", drierId)
 	result, err := repo.client.Get(context.Background(), key).Result()
 	return result, err
 }

@@ -24,7 +24,7 @@ func (repo *PostgresRepository) UpdateRegisterValue(plcId string, regAddress str
 }
 
 func (repo *PostgresRepository) CreateBatch(batch *model.Batch) error {
-	query := `INSERT INTO batches (drier_id,recipe_step,time,temp,pid) VALUES ($1,$2,$3,$4,$5)`
-	_, err := repo.db.Exec(query, batch.DrierId, batch.RecipeStep, batch.Time, batch.Temperature, batch.Pid)
+	query := `INSERT INTO batches (drier_id,recipe_step,set_time,real_time,real_temp,real_pid) VALUES ($1,$2,$3,$4,$5,$6)`
+	_, err := repo.db.Exec(query, batch.DrierId, batch.RecipeStep, batch.SetTime, batch.RealTimeTime, batch.RealTimeTemperature, batch.RealTimePid)
 	return err
 }

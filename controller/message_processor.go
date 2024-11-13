@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 	"time"
 
@@ -90,8 +89,6 @@ func MessageProcessor(c mqtt.Client, m mqtt.Message, cacheRepo *repository.Redis
 
 	splittedRegisterType := strings.Split(registerType, "_")
 
-	fmt.Println(registerType)
-
 	if splittedRegisterType[0] == "rt" {
 
 		message := map[string]string{
@@ -126,23 +123,13 @@ func MessageProcessor(c mqtt.Client, m mqtt.Message, cacheRepo *repository.Redis
 		return
 	}
 
-	if splittedRegisterType[0] == "rcp" {
-		if splittedRegisterType[3] == "tp" {
-			recipeStepCount, err := cacheRepo.GetDrierRecipeStepCount(drierId)
-
-			if err != nil {
-				log.Printf("error occurred with redis while getting drier recipe step count, Error -> %v\n", err.Error())
-				return
-			}
-
-			if splittedRegisterType[2] == recipeStepCount {
-				if err := cacheRepo.UpdateDrierRecipeTemperature(drierId, rawMessage.Data); err != nil {
-					log.Printf("error occurred with redis while updating the drier recipe temperature, Error -> %v\n", err.Error())
+	if splittedRegisterType[0] == "cmp" {
+		if splittedRegisterType[1] == "rcp" {
+			if registerValue != rawMessage.Data {
+				if err := cacheRepo.UpdateRecipeStepCompleteStatus(drierId, rawMessage.Data); err != nil {
+					log.Printf("error occurred with redis while updating the register value, Error -> %v\n", err.Error())
 					return
 				}
-			}
-
-			if registerValue != rawMessage.Data {
 				if err := cacheRepo.UpdateRegisterValue(clientId, rawMessage.RegisterAddress, rawMessage.Data); err != nil {
 					log.Printf("error occurred with redis while updating the register value, Error -> %v\n", err.Error())
 					return
@@ -152,88 +139,120 @@ func MessageProcessor(c mqtt.Client, m mqtt.Message, cacheRepo *repository.Redis
 					return
 				}
 			}
-			return
+		}
+		return
+	}
+
+	if splittedRegisterType[0] == "rcp" {
+
+		if splittedRegisterType[3] == "st" {
+			if rawMessage.Data == "400" {
+				currentStepCount := splittedRegisterType[2]
+				if err := cacheRepo.UpdateDrierRecipeStepCount(drierId, currentStepCount); err != nil {
+					log.Printf("error occurred with redis while updating drier recipe step count, Error -> %v\n", err.Error())
+					return
+				}
+			}
 		}
 
-		// maxTimeStr := os.Getenv("DRIER_RECIPE_MAX_TIME")
+		if splittedRegisterType[3] == "rtm" {
 
-		// if maxTimeStr == "" {
-		// 	log.Printf("missing or empty env variable DRIER_RECIPE_MAX_TIME")
-		// 	return
-		// }
-
-		// maxTime, err := strconv.Atoi(maxTimeStr)
-
-		// if err != nil {
-		// 	log.Printf("error occurred while parsing drier recipe max time from string to integer, Error -> %v\n", err.Error())
-		// 	return
-		// }
-
-		maxTime := 3600
-
-		currentTime, err := strconv.Atoi(rawMessage.Data)
-
-		if err != nil {
-			log.Printf("error occurred while parsing drier recipe current time from string to integer, Error -> %v\n", err.Error())
-			return
-		}
-
-		if currentTime > 0 && currentTime < maxTime {
 			recipeStepCount, err := cacheRepo.GetDrierRecipeStepCount(drierId)
+
 			if err != nil {
 				log.Printf("error occurred with redis while getting drier recipe step count, Error -> %v\n", err.Error())
 				return
 			}
 
-			if splittedRegisterType[2] != recipeStepCount {
-				if err := cacheRepo.UpdateDrierRecipeStepCount(drierId, splittedRegisterType[2]); err != nil {
-					log.Printf("error occurred with redis while updating drier recipe step count, Error -> %v\n", err.Error())
+			if recipeStepCount == splittedRegisterType[2] {
+
+				recipeRealTimeTemp, err := cacheRepo.GetDrierRecipeRealTimeTemperature(drierId)
+
+				if err != nil {
+					log.Printf("error occurred with redis while getting recipe real time temperature, Error -> %v\n", err.Error())
 					return
+				}
+
+				recipeSetTime, err := cacheRepo.GetDrierRecipeSetTime(drierId)
+
+				if err != nil {
+					log.Printf("error occurred with redis while getting recipe set time, Error -> %v\n", err.Error())
+					return
+				}
+
+				recipeStepMessage := &model.RecipeStep{
+					StepCount:       recipeStepCount,
+					RealTime:        rawMessage.Data,
+					RealTemperature: recipeRealTimeTemp,
+					SetTime:         recipeSetTime,
+				}
+
+				recipeStepJsonMessage, err := json.Marshal(recipeStepMessage)
+
+				if err != nil {
+					log.Printf("error occurred while encoding recipe step message to json, Error -> %v\n", err.Error())
+					return
+				}
+
+				c.Publish(drierId, 0, false, recipeStepJsonMessage)
+
+				if registerValue != rawMessage.Data {
+
+					realTimePid, err := cacheRepo.GetDrierPid(drierId)
+
+					if err != nil {
+						log.Printf("error occurred with redis while getting the real time pid, Error -> %v\n", err.Error())
+						return
+					}
+
+					batch := &model.Batch{
+						DrierId:             drierId,
+						RecipeStep:          recipeStepCount,
+						SetTime:             recipeSetTime,
+						RealTimeTime:        rawMessage.Data,
+						RealTimeTemperature: recipeRealTimeTemp,
+						RealTimePid:         realTimePid,
+					}
+
+					if err := dbRepo.CreateBatch(batch); err != nil {
+						log.Printf("error occurred with database while creating the batch, Error -> %v\n", err.Error())
+						return
+					}
 				}
 			}
 
-			recipeTemperature, err := cacheRepo.GetDrierRecipeTemperature(drierId)
+		}
+
+		if splittedRegisterType[3] == "rtp" {
+			recipeStepCount, err := cacheRepo.GetDrierRecipeStepCount(drierId)
 
 			if err != nil {
-				log.Printf("error occurred with redis while getting the drier recipe temperature, Error -> %v\n", err.Error())
+				log.Printf("error occurred with redis while getting drier recipe step count, Error -> %v\n", err.Error())
 				return
 			}
 
-			recipeStepMessage := &model.RecipeStep{
-				StepCount:   splittedRegisterType[2],
-				Time:        rawMessage.Data,
-				Temperature: recipeTemperature,
+			if recipeStepCount == splittedRegisterType[2] {
+				if err := cacheRepo.UpdateDrierRecipeRealTimeTemperature(drierId, rawMessage.Data); err != nil {
+					log.Printf("error occurred with redis while updating the drier recipe real time temperature, Error -> %v\n", err.Error())
+					return
+				}
 			}
+		}
 
-			recipeStepJsonMessage, err := json.Marshal(recipeStepMessage)
+		if splittedRegisterType[3] == "stm" {
+			recipeStepCount, err := cacheRepo.GetDrierRecipeStepCount(drierId)
 
 			if err != nil {
-				log.Printf("error occurred while encoding recipe step message to json, Error -> %v\n", err.Error())
+				log.Printf("error occurred with redis while getting drier recipe step count, Error -> %v\n", err.Error())
 				return
 			}
 
-			c.Publish(drierId, 1, false, recipeStepJsonMessage)
-
-			drierPid, err := cacheRepo.GetDrierPid(drierId)
-
-			if err != nil {
-				log.Printf("error occurred with redis while getting the drier pid, Error -> %v\n", err)
-				return
+			if recipeStepCount == splittedRegisterType[2] {
+				if err := cacheRepo.UpdateRecipeSetTime(drierId, rawMessage.Data); err != nil {
+					log.Printf("error occurred with redis while updating the recipe step time, Error -> %v\n", err.Error())
+					return
+				}
 			}
-
-			batch := &model.Batch{
-				DrierId:     drierId,
-				RecipeStep:  splittedRegisterType[2],
-				Time:        rawMessage.Data,
-				Temperature: recipeTemperature,
-				Pid:         drierPid,
-			}
-
-			if err := dbRepo.CreateBatch(batch); err != nil {
-				log.Printf("error occurred with database while creating the batch, Error -> %v\n", err.Error())
-				return
-			}
-
 		}
 
 		if registerValue != rawMessage.Data {
@@ -251,13 +270,6 @@ func MessageProcessor(c mqtt.Client, m mqtt.Message, cacheRepo *repository.Redis
 	}
 
 	if registerValue != rawMessage.Data {
-		if err := cacheRepo.UpdateRegisterValue(clientId, rawMessage.RegisterAddress, rawMessage.Data); err != nil {
-			log.Printf("error occurred with redis while updating the register value, Error -> %v\n", err.Error())
-		}
-		if err := dbRepo.UpdateRegisterValue(clientId, rawMessage.RegisterAddress, rawMessage.Data); err != nil {
-			log.Printf("error occurred with database while updating the register value, Error -> %v\n", err.Error())
-		}
-
 		message := map[string]string{
 			registerType: rawMessage.Data,
 		}
@@ -271,5 +283,15 @@ func MessageProcessor(c mqtt.Client, m mqtt.Message, cacheRepo *repository.Redis
 
 		c.Publish(drierId, 1, false, jsonMessage)
 
+		if err := cacheRepo.UpdateRegisterValue(clientId, rawMessage.RegisterAddress, rawMessage.Data); err != nil {
+			log.Printf("error occurred with redis while updating the register value, Error -> %v\n", err.Error())
+			return
+		}
+		if err := dbRepo.UpdateRegisterValue(clientId, rawMessage.RegisterAddress, rawMessage.Data); err != nil {
+			log.Printf("error occurred with database while updating the register value, Error -> %v\n", err.Error())
+			return
+		}
+
+		return
 	}
 }

@@ -1,9 +1,10 @@
 package model
 
 type Batch struct {
-	DrierId     string
-	RecipeStep  string
-	Time        string
-	Temperature string
-	Pid         string
+	DrierId             string
+	RecipeStep          string
+	SetTime             string
+	RealTimeTime        string
+	RealTimeTemperature string
+	RealTimePid         string
 }
